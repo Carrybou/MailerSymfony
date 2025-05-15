@@ -1,0 +1,40 @@
+security:
+    # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+    # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
+    providers:
+        users_in_memory:
+            memory:
+                users:
+                    # On définit que nos utilisateurs sont ceux avec le badge 'api_user'
+                    api_user:
+                        # Ils s'authentifient sans mot de passe
+                        password: null
+                        # On leur assigne un rôle
+                        roles: [ 'ROLE_API' ]
+        firewalls:
+            main:
+                # On attrappe toutes les requêtes entrante sur l'appli
+                pattern: ^/
+                stateless: true
+                provider: users_in_memory
+                # On utilise notre authenticator custom pour gérer chacune d'entres elles
+                custom_authenticators:
+                    - App\\Security\\ApiAuthenticator
+
+        access_control:
+            # On limite toutes les ressources aux utilisateurs avec le role ROLE_API = utilisateurs authentifiés
+            - { path: ^/, roles: ROLE_API }
+when@test:
+    security:
+        password_hashers:
+            # By default, password hashers are resource intensive and take time. This is
+            # important to generate secure password hashes. In tests however, secure hashes
+            # are not important, waste resources and increase test times. The following
+            # reduces the work factor to the lowest possible values.
+            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+                algorithm: auto
+                cost: 4 # Lowest possible value for bcrypt
+                time_cost: 3 # Lowest possible value for argon
+                memory_cost: 10 # Lowest possible value for argon
